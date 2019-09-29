@@ -16,6 +16,7 @@ jmp_instructions = ["je", "jb", "jl", "jge", "jle", "jmp", "jne", "jbe"]
 md = Cs(CS_ARCH_X86, CS_MODE_64)
 
 instructions = []
+visited = []
 
 def main():
     print("Reading file: " + binary)
@@ -38,10 +39,8 @@ def main():
                 analyze()
             elif command[0] == "d":
                 dissasemble2(code['sh_addr'], opcodes)
-            elif command[0] == "functions":
+            elif command[0] == "afl":
                 print_functions()
-            elif command[0] == "head":
-                header()
             elif command[0] == "clear":
                 os.system("clear")
 
@@ -53,6 +52,8 @@ def main():
                 print("pdfs: print disassembly function summary")
             elif command[0] == "pd":
                 print_disassembly()
+            elif command[0] == "pdr":
+                print_disassembly_recursive()
             elif command[0] == "pds":
                 print_disassembly_summary()
             elif command[0] == "pdf":
@@ -75,6 +76,34 @@ def main():
             elif command[0] == "q":
                 exit()
 
+def print_disassembly_recursive():
+    global program
+    global location
+
+    print("Starting recursive disassembly from location...")
+
+    pdr(location)
+
+
+def pdr(loc):
+    global program
+    global visited
+    found_start = False
+
+    for i in instructions:
+        if i.address == loc:
+            found_start = True
+        if found_start == True:
+            print_instruction(i)
+            visited.append(i.address)
+            if i.instruction == "call" and not i.opcode in visited:
+                print("[" + i.opcode + "] (Called)")
+                pdr(i.opcode)
+            if i.instruction[0] == "j" and not i.opcode in visited:
+                print("[" + i.opcode + "] (Jumped)")
+                pdr(i.opcode)
+            if i.instruction == "ret":
+                return
 
 
 def line():
