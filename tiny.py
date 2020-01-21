@@ -5,6 +5,10 @@ from termcolor import colored
 from elftools.elf.elffile import ELFFile
 import subprocess
 import os
+from pydbg import *
+from pydbg.defines import *
+import struct
+import random
 
 binary = "binary"
 location = "0x000000"
@@ -18,7 +22,10 @@ md = Cs(CS_ARCH_X86, CS_MODE_64)
 instructions = []
 visited = []
 
+dbg = pydbg()
+
 def main():
+    global pydbg
     print("Reading file: " + binary)
 
     with open(binary, "rb") as f:
@@ -75,6 +82,20 @@ def main():
                 seek(command[1])
             elif command[0] == "q":
                 exit()
+            elif command[0] == "ood":
+                if len(command) != 2:
+                    print("Usage: ood <pid>")
+                else:
+                    dbg.attach(int(command[1]))
+            elif command[0] == "db":
+                if len(command) != 2:
+                    print("Usage: db <address>")
+                else:
+                    dbg.bp_set(int(command[1], 16), description="Breakpoint", handler=hit_breakpoint)
+
+def hit_breakpoint():
+    print("Hit the breakpoint")
+                
 
 def print_disassembly_recursive():
     global program
